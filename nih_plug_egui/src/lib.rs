@@ -5,7 +5,7 @@
 use baseview::gl::GlConfig;
 use baseview::{Size, WindowHandle, WindowOpenOptions, WindowScalePolicy};
 use crossbeam::atomic::AtomicCell;
-use egui::CtxRef;
+use egui::{Align2, Color32, CtxRef, Sense, Stroke};
 use egui_baseview::EguiWindow;
 use nih_plug::{Editor, ParamSetter, ParentWindowHandle};
 use parking_lot::RwLock;
@@ -92,6 +92,7 @@ where
         let update = self.update.clone();
         let state = self.user_state.clone();
 
+        let egui_state = self.egui_state.clone();
         let (width, height) = self.egui_state.size();
         let window = EguiWindow::open_parented(
             &parent,
@@ -128,7 +129,32 @@ where
                 // their GUI while the window is still unmapped.
                 // TODO: Are there other useful parts of this queue we could pass to thep lugin?
                 queue.request_repaint();
+
                 (update)(egui_ctx, &setter, &mut state.write());
+
+                egui::Area::new("resize_handle")
+                    .anchor(Align2::RIGHT_BOTTOM, (0.0, 0.0))
+                    .show(egui_ctx, |ui| {
+                        let (rect, response) =
+                            ui.allocate_exact_size(egui::vec2(20.0, 20.0), Sense::drag());
+                        ui.painter().add(egui::Shape::convex_polygon(
+                            vec![rect.left_bottom(), rect.right_bottom(), rect.right_top()],
+                            Color32::from_rgba_unmultiplied(128, 128, 128, 128),
+                            Stroke::none(),
+                        ));
+                        if response.dragged() {
+                            // FIXME: This doesn't take DPI scaling into account and will probably
+                            //        break spectacularly there
+                            let (width, height) = egui_state.size.load();
+                            let (drag_x, drag_y) = response.drag_delta().into();
+                            // FIXME: Super janky because of the rounding
+                            egui_state.size.store((
+                                (width as f32 + drag_x.round()) as u32,
+                                (height as f32 + drag_y.round()) as u32,
+                            ));
+                            context.request_resize();
+                        }
+                    });
             },
         )
         .expect("We provided an OpenGL config, did we not?");

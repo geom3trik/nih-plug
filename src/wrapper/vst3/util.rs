@@ -39,7 +39,7 @@ pub struct VstPtr<T: vst3_sys::ComInterface + ?Sized> {
 /// works for interfaces.
 #[repr(transparent)]
 pub struct ObjectPtr<T: IUnknown> {
-    ptr: *const T,
+    pub ptr: *const T,
 }
 
 impl<T: ComInterface + ?Sized> Deref for VstPtr<T> {

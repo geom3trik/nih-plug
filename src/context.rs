@@ -60,6 +60,12 @@ pub trait ProcessContext {
 // The implementing wrapper can assume that everything is being called from the main thread. Since
 // NIH-plug doesn't own the GUI event loop, this invariant cannot be part of the interface.
 pub trait GuiContext: Send + Sync + 'static {
+    /// Resize the editor window to the size specified by [crate::Editor::size()]. This will return
+    /// false if the host somehow didn't like this and rejected the resize.
+    ///
+    /// TODO: Host->Plugin resizing has not been implemented yet
+    fn request_resize(&self) -> bool;
+
     /// Inform the host a parameter will be automated. Create a [ParamSetter] and use
     /// [ParamSetter::begin_set_parameter] instead for a safe, user friendly API.
     ///

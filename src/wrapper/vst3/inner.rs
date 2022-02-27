@@ -229,6 +229,13 @@ impl<P: Plugin> WrapperInner<P> {
 // alternative is to pass an `Arc<Self as GuiContext>` to the plugin and hope it doesn't do anything
 // weird with it.
 impl<P: Plugin> GuiContext for WrapperInner<P> {
+    fn request_resize(&self) -> bool {
+        match &*self.plug_view.read() {
+            Some(plug_view) => plug_view.request_resize(),
+            None => false,
+        }
+    }
+
     // All of these functions are supposed to be called from the main thread, so we'll put some
     // trust in the caller and assume that this is indeed the case
     unsafe fn raw_begin_set_parameter(&self, param: ParamPtr) {

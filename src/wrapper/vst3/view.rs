@@ -6,7 +6,7 @@ use std::mem;
 use std::sync::Arc;
 use vst3_com::utils::SharedVstPtr;
 use vst3_sys::base::{kInvalidArgument, kResultFalse, kResultOk, tresult, TBool};
-use vst3_sys::gui::{IPlugFrame, IPlugView};
+use vst3_sys::gui::{IPlugFrame, IPlugView, ViewRect};
 use vst3_sys::VST3;
 
 use super::inner::WrapperInner;
@@ -44,6 +44,39 @@ pub(crate) struct WrapperView<P: Plugin> {
 impl<P: Plugin> WrapperView<P> {
     pub fn new(inner: Arc<WrapperInner<P>>, editor: Arc<dyn Editor>) -> Box<Self> {
         Self::allocate(inner, editor, RwLock::new(None), RwLock::new(None))
+    }
+
+    /// Ask the host to resize the view to the size specified by [Editor::size()]. Will return false
+    /// if the host doesn't like you.
+    pub fn request_resize(&self) -> bool {
+        // Don't do anything if the editor is not open, because that would be strange
+        if self
+            .editor_handle
+            .try_read()
+            .map(|e| e.is_none())
+            .unwrap_or(true)
+        {
+            return false;
+        }
+
+        match &*self.plug_frame.read() {
+            Some(plug_frame) => {
+                let (width, height) = self.editor.size();
+                let mut size = ViewRect {
+                    right: width as i32,
+                    bottom: height as i32,
+                    ..Default::default()
+                };
+
+                // The argument types are a bit wonky here because you can't construct a
+                // `SharedVstPtr`. This _should_ work however.
+                let plug_view: SharedVstPtr<dyn IPlugView> = unsafe { mem::transmute(self) };
+                let result = unsafe { plug_frame.resize_view(plug_view, &mut size) };
+
+                result == kResultOk
+            }
+            None => false,
+        }
     }
 }
 
@@ -177,7 +210,7 @@ impl<P: Plugin> IPlugView for WrapperView<P> {
     }
 
     unsafe fn on_size(&self, _new_size: *mut vst3_sys::gui::ViewRect) -> tresult {
-        // TODO: Implement resizing
+        // TODO: Implement Host->Plugin resizing
         kResultOk
     }
 
@@ -197,14 +230,14 @@ impl<P: Plugin> IPlugView for WrapperView<P> {
     }
 
     unsafe fn can_resize(&self) -> tresult {
-        // TODO: Implement resizing
+        // TODO: Implement Host->Plugin resizing
         kResultFalse
     }
 
     unsafe fn check_size_constraint(&self, rect: *mut vst3_sys::gui::ViewRect) -> tresult {
         check_null_ptr!(rect);
 
-        // TODO: Add this with the resizing
+        // TODO: Implement Host->Plugin resizing
         if (*rect).right - (*rect).left > 0 && (*rect).bottom - (*rect).top > 0 {
             kResultOk
         } else {
