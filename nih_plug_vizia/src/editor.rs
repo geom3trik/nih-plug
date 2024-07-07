@@ -1,6 +1,6 @@
 //! The [`Editor`] trait implementation for Vizia editors.
 
-use baseview::{WindowHandle, WindowScalePolicy};
+
 use crossbeam::atomic::AtomicCell;
 use nih_plug::debug::*;
 use nih_plug::prelude::{Editor, GuiContext, ParentWindowHandle};

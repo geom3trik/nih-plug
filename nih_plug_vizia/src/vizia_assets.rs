@@ -16,14 +16,14 @@ pub const ROBOTO: &str = "Roboto";
 pub const TABLER_ICONS: &str = "tabler-icons";
 
 pub fn register_roboto(cx: &mut Context) {
-    cx.add_font_mem(fonts::ROBOTO_REGULAR);
+    //cx.add_font_mem(fonts::ROBOTO_REGULAR);
 }
 pub fn register_roboto_bold(cx: &mut Context) {
-    cx.add_font_mem(fonts::ROBOTO_BOLD);
+    //cx.add_font_mem(fonts::ROBOTO_BOLD);
 }
 pub fn register_roboto_italic(cx: &mut Context) {
-    cx.add_font_mem(fonts::ROBOTO_ITALIC);
+    //cx.add_font_mem(fonts::ROBOTO_ITALIC);
 }
 pub fn register_tabler_icons(cx: &mut Context) {
-    cx.add_font_mem(fonts::TABLER_ICONS);
+    //cx.add_font_mem(fonts::TABLER_ICONS);
 }

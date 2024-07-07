@@ -108,7 +108,7 @@ impl View for ResizeHandle {
         });
     }
 
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
         // We'll draw the handle directly as styling elements for this is going to be a bit tricky
 
         // These basics are taken directly from the default implementation of this function
@@ -119,11 +119,6 @@ impl View for ResizeHandle {
 
         let background_color = cx.background_color();
         let border_color = cx.border_color();
-        let opacity = cx.opacity();
-        let mut background_color: vg::Color = background_color.into();
-        background_color.set_alphaf(background_color.a * opacity);
-        let mut border_color: vg::Color = border_color.into();
-        border_color.set_alphaf(border_color.a * opacity);
         let border_width = cx.border_width();
 
         let mut path = vg::Path::new();
@@ -131,21 +126,24 @@ impl View for ResizeHandle {
         let y = bounds.y + border_width / 2.0;
         let w = bounds.w - border_width;
         let h = bounds.h - border_width;
-        path.move_to(x, y);
-        path.line_to(x, y + h);
-        path.line_to(x + w, y + h);
-        path.line_to(x + w, y);
-        path.line_to(x, y);
+        path.move_to((x, y));
+        path.line_to((x, y + h));
+        path.line_to((x + w, y + h));
+        path.line_to((x + w, y));
+        path.line_to((x, y));
         path.close();
 
         // Fill with background color
-        let paint = vg::Paint::color(background_color);
-        canvas.fill_path(&path, &paint);
+        let mut paint = vg::Paint::default();
+        paint.set_color(background_color);
+        canvas.draw_path(&path, &paint);
 
         // Borders are only supported to make debugging easier
-        let mut paint = vg::Paint::color(border_color);
-        paint.set_line_width(border_width);
-        canvas.stroke_path(&path, &paint);
+        let mut paint = vg::Paint::default();
+        paint.set_color(border_color);
+        paint.set_stroke_width(border_width);
+        paint.set_style(vg::PaintStyle::Stroke);
+        canvas.draw_path(&path, &paint);
 
         // We'll draw a simple triangle, since we're going flat everywhere anyways and that style
         // tends to not look too tacky
@@ -154,10 +152,10 @@ impl View for ResizeHandle {
         let y = bounds.y + border_width / 2.0;
         let w = bounds.w - border_width;
         let h = bounds.h - border_width;
-        path.move_to(x, y + h);
-        path.line_to(x + w, y + h);
-        path.line_to(x + w, y);
-        path.move_to(x, y + h);
+        path.move_to((x, y + h));
+        path.line_to((x + w, y + h));
+        path.line_to((x + w, y));
+        path.move_to((x, y + h));
         path.close();
 
         // Yeah this looks nowhere as good
@@ -175,10 +173,9 @@ impl View for ResizeHandle {
         // path.move_to(x + (w / 3.0 * 1.5), y + h);
         // path.close();
 
-        let mut color: vg::Color = cx.font_color().into();
-        color.set_alphaf(color.a * opacity);
-        let paint = vg::Paint::color(color);
-        canvas.fill_path(&path, &paint);
+        let mut paint = vg::Paint::default();
+        paint.set_color(cx.font_color());
+        canvas.draw_path(&path, &paint);
     }
 }
 
@@ -198,7 +195,7 @@ fn intersects_triangle(bounds: BoundingBox, (x, y): (f32, f32)) -> bool {
     // let (v2x, v2y) = (p3x - p2x, p3y - p2y);
     // let (v3x, v3y) = (p1x - p3x, p1y - p3y);
 
-    ((x - p1x) * v1y) - ((y - p1y) * v1x) >= 0.0
+    ((x - p1x) * v1y) - ((y - p1y) * v1x) <= 0.0
     // && ((x - p2x) * v2y) - ((y - p2y) * v2x) >= 0.0
     // && ((x - p3x) * v3y) - ((y - p3y) * v3x) >= 0.0
 }
